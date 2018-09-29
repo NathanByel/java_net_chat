@@ -26,7 +26,7 @@ public class Server {
 
     public Server() {
         try ( ServerSocket serverSocket = new ServerSocket(PORT);
-              AuthService authService = new BaseAuthService() ) {
+              AuthService authService = new SQLiteAuthService() ) {
 
             this.authService = authService;
             authService.start();
