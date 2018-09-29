@@ -6,6 +6,7 @@ import com.java_net_chat.Log;
 import com.java_net_chat.Messages.*;
 import com.java_net_chat.User;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,8 +28,6 @@ public class Client implements ClientController {
 
     private Thread receiverThread = null;
     private List<String> usersList = new ArrayList<>();
-
-
 
     public static void main(String[] args) {
         new Client();
@@ -164,6 +163,15 @@ public class Client implements ClientController {
                 clientUI.addMessage("Пользователь не найден.\n\r");
                 break;
 
+            case RSP_CHANGE_NICK_ERR:
+                JOptionPane.showMessageDialog(null,"Такой пользователь уже существует!");
+                break;
+
+            case RSP_CHANGE_NICK_OK:
+                JOptionPane.showMessageDialog(null,"Данные сохранены! Войдите заново.");
+                System.exit(0);
+                break;
+
             //case RSP_USERS_LIST:
                 // ПЕРЕДЕЛАТЬ
                 /*usersList.clear();
@@ -176,7 +184,7 @@ public class Client implements ClientController {
                 //break;
 
             default:
-                Log.e(TAG, "Wrong response type");
+                Log.e(TAG, "Wrong response type - " + msg.getRsp().toString());
         }
 
     }
@@ -217,6 +225,18 @@ public class Client implements ClientController {
     private void sendMessage(Message msg) {
         if (connected && subscribed) {
             if( !net.sendMessage(msg) ) {
+                Log.e(TAG, "sendMessage Ошибка сети!");
+            }
+        } else {
+            clientUI.addMessage("Нет подключения к серверу!");
+            Log.e(TAG, "Нет подключения к серверу!");
+        }
+    }
+
+    @Override
+    public void changeNickName(String nickName) {
+        if (connected && subscribed) {
+            if( !net.sendMessage( new ChangeNicknameMessage(nickName)) ) {
                 Log.e(TAG, "sendMessage Ошибка сети!");
             }
         } else {

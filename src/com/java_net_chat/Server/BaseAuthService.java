@@ -25,4 +25,9 @@ public class BaseAuthService implements AuthService {
     public void close() throws IOException {
 
     }
+
+    @Override
+    public boolean changeNickName(String oldNickName, String newNickName) {
+        return false;
+    }
 }

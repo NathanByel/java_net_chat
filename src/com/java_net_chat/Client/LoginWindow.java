@@ -23,7 +23,6 @@ public class LoginWindow extends JFrame implements ClientUI {
         setLocationRelativeTo(null);
         setLayout( new BoxLayout(getContentPane(), BoxLayout.Y_AXIS) );
 
-
         nickNameField = new JTextField();
         nickNameField.setText(INPUT_NICK_TEXT);
         add(nickNameField);
