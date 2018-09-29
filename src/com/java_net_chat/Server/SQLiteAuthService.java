@@ -8,7 +8,6 @@ import org.sqlite.JDBC;
 import java.io.IOException;
 import java.sql.*;
 
-
 /*
     1. Добавить в сетевой чат авторизацию через базу данных SQLite.
     2.*Добавить в сетевой чат возможность смены ника.
@@ -16,7 +15,8 @@ import java.sql.*;
 
 public class SQLiteAuthService implements AuthService {
     private static final String TAG = "SQL Auth";
-    private static final String DB_PATH = "/src/resources/users.db";
+    //private static final String DB_PATH = "../../chat_db.db";
+    private static final String DB_PATH = "E:/REPOSITORY/GitHUB/java_net_chat/src/chat_db.db";
 
     private Connection connection = null;
 
@@ -41,16 +41,16 @@ public class SQLiteAuthService implements AuthService {
             connection = DriverManager.getConnection(JDBC.PREFIX + DB_PATH);
 
             Statement stmt = connection.createStatement();
-            ResultSet resultSet = stmt.executeQuery("SELECT Pass FROM users WHERE Nickname = '" + user.getNickName() + "'");
+            ResultSet resultSet = stmt.executeQuery("SELECT Password FROM users WHERE Nickname = '" + user.getNickName() + "'");
             if(resultSet.next()) {
-                String pass = resultSet.getString("Pass");
+                String pass = resultSet.getString("Password");
                 if( (pass != null) && pass.equals(user.getPass())) {
                     Log.e(TAG, "Auth OK");
                     return true;
                 }
             }
         } catch (SQLException e) {
-            Log.e(TAG, "SQL error");
+            Log.e(TAG, "SQL error - " + e.getMessage());
             return false;
             //e.printStackTrace();
         }
