@@ -76,14 +76,15 @@ public class NetDataChannel implements DataChannel {
 
         Message msg;
         switch( MessageType.valueOf(fields[1]) ) {
-            case BROADCAST_MESSAGE:     msg = new BroadcastMessage();   break;
-            case PRIVATE_MESSAGE:       msg = new PrivateMessage();     break;
-            case INFO_MESSAGE:          msg = new InfoMessage();        break;
+            case BROADCAST_MESSAGE:         msg = new BroadcastMessage();       break;
+            case PRIVATE_MESSAGE:           msg = new PrivateMessage();         break;
+            case INFO_MESSAGE:              msg = new InfoMessage();            break;
 //            case ALIVE_MESSAGE: break;
 //            case COMMAND_MESSAGE: break;
-            case RESPONSE_MESSAGE:      msg = new ResponseMessage();    break;
-            case AUTH_MESSAGE:          msg = new AuthMessage();        break;
-            case USERS_LIST_MESSAGE:    msg = new UsersListMessage();   break;
+            case RESPONSE_MESSAGE:          msg = new ResponseMessage();        break;
+            case AUTH_MESSAGE:              msg = new AuthMessage();            break;
+            case USERS_LIST_MESSAGE:        msg = new UsersListMessage();       break;
+            case CHANGE_NICKNAME_MESSAGE:   msg = new ChangeNicknameMessage();  break;
             default:
                 Log.e(TAG, "Wrong type. MSG " + data);
                 return null;

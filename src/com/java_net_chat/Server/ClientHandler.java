@@ -142,6 +142,14 @@ public class ClientHandler {
                 }
                 break;
 
+            case CHANGE_NICKNAME_MESSAGE:
+                if( server.getAuthService().changeNickName(this.userInfo.getNickName(), ((ChangeNicknameMessage)msg).getNickName())) {
+                    net.sendMessage(new ResponseMessage(CmdRsp.RSP_CHANGE_NICK_OK));
+                } else {
+                    net.sendMessage(new ResponseMessage(CmdRsp.RSP_CHANGE_NICK_ERR));
+                }
+                break;
+
             //case INFO_MESSAGE:
             //    break;
 

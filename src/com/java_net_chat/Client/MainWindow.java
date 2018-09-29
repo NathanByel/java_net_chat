@@ -4,6 +4,8 @@ import com.java_net_chat.CmdRsp;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class MainWindow extends JFrame implements ClientUI {
     private JTextArea textAreaChat;
@@ -46,9 +48,34 @@ public class MainWindow extends JFrame implements ClientUI {
         add(panelSend, BorderLayout.PAGE_END);
         setVisible(true);
 
+        // Меню
+        JMenuBar mainMenuBar = new JMenuBar();
+        mainMenuBar.add(createFileMenu());
+        mainMenuBar.add(createConfigMenu());
+        setJMenuBar(mainMenuBar);
+
         // Обработчики
         textFieldSend.addActionListener(e -> sendText());
         buttonSend.addActionListener(e -> sendText());
+    }
+
+    private JMenu createFileMenu() {
+        JMenu fileMenu = new JMenu("Файл");
+        return fileMenu;
+    }
+
+    private JMenu createConfigMenu() {
+        JMenu configMenu = new JMenu("Настройки");
+        JMenuItem userData = new JMenuItem("Данные пользователя");
+        configMenu.add(userData);
+
+        userData.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                new UserDataWindow(clientController);
+            }
+        });
+        return configMenu;
     }
 
     private void sendText() {

@@ -9,6 +9,7 @@ public interface ClientController {
     void sendTextMessage(String msg);
     void sendTextMessage(String toUser, String msg);
     void logIn(String nickName, String pass);
+    void changeNickName(String nickName);
     User getUser();
     List<String> getUsersList();
 }

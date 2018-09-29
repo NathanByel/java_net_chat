@@ -38,10 +38,8 @@ public class SQLiteAuthService implements AuthService {
     @Override
     public boolean checkUser(User user) {
         try {
-            connection = DriverManager.getConnection(JDBC.PREFIX + DB_PATH);
-
             Statement stmt = connection.createStatement();
-            ResultSet resultSet = stmt.executeQuery("SELECT Password FROM users WHERE Nickname = '" + user.getNickName() + "'");
+            ResultSet resultSet = stmt.executeQuery("SELECT Password FROM users WHERE NickName = '" + user.getNickName() + "'");
             if(resultSet.next()) {
                 String pass = resultSet.getString("Password");
                 if( (pass != null) && pass.equals(user.getPass())) {
@@ -57,6 +55,31 @@ public class SQLiteAuthService implements AuthService {
         Log.e(TAG, "Auth error");
         return false;
     }
+
+    @Override
+    public boolean changeNickName(String oldNickName, String newNickName) {
+        try {
+            Statement stmt = connection.createStatement();
+            ResultSet resultSet = stmt.executeQuery("SELECT Nickname FROM users WHERE NickName = '" + oldNickName + "'");
+            if(resultSet.next()) {
+                Log.e(TAG, "User found");
+
+                if (stmt.executeUpdate("UPDATE users SET NickName = '" + newNickName + "' WHERE NickName = '" + oldNickName + "'") > 0) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        } catch (SQLException e) {
+            Log.e(TAG, "SQL error - " + e.getMessage());
+            return false;
+            //e.printStackTrace();
+        }
+        Log.e(TAG, "User not found");
+        return false;
+    }
+
+
 
     @Override
     public void close() throws IOException {
