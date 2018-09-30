@@ -29,6 +29,8 @@ public class Client implements ClientController {
     private Thread receiverThread = null;
     private List<String> usersList = new ArrayList<>();
 
+    private History history;
+
     public static void main(String[] args) {
         new Client();
     }
@@ -112,24 +114,32 @@ public class Client implements ClientController {
 
     private void parseMessage(Message msg) {
         switch (msg.getType()) {
-            case BROADCAST_MESSAGE:
-                BroadcastMessage m = (BroadcastMessage) msg;
-                clientUI.addMessage(m.getFrom() + ": " + m.getText());
+            case BROADCAST_MESSAGE: {
+                    BroadcastMessage m = (BroadcastMessage) msg;
+                    String text = m.getFrom() + ": " + m.getText();
+                    history.add(text);
+                    clientUI.addMessage(text);
+                }
                 break;
 
-            case PRIVATE_MESSAGE:
-                PrivateMessage p = (PrivateMessage) msg;
-                clientUI.addMessage("(PM)" + p.getFrom() + ": " + p.getText());
+            case PRIVATE_MESSAGE: {
+                    PrivateMessage m = (PrivateMessage) msg;
+                    String text = "(PM)" + m.getFrom() + ": " + m.getText();
+                    history.add(text);
+                    clientUI.addMessage(text);
+                }
                 break;
 
-            case USERS_LIST_MESSAGE:
-                UsersListMessage u = (UsersListMessage) msg;
-                clientUI.setUsersList(u.getUsers());
+            case USERS_LIST_MESSAGE: {
+                    UsersListMessage m = (UsersListMessage) msg;
+                    clientUI.setUsersList(m.getUsers());
+                }
                 break;
 
-            case INFO_MESSAGE:
-                InfoMessage i = (InfoMessage) msg;
-                clientUI.addMessage("Info: " + i.getText());
+            case INFO_MESSAGE: {
+                    InfoMessage m = (InfoMessage) msg;
+                    clientUI.addMessage("Info: " + m.getText());
+                }
                 break;
 
             case RESPONSE_MESSAGE:
@@ -148,6 +158,13 @@ public class Client implements ClientController {
                 logInUI.statusCallback(msg.getRsp());
                 if (clientUI == null) {
                     clientUI = new MainWindow(this);
+                    history = new History(user.getNickName());
+                    List<String> lastHistory = history.getLastRecords(100);
+                    if(lastHistory != null) {
+                        for (int i = lastHistory.size() - 1; i >= 0; i--) {
+                            clientUI.addMessage(lastHistory.get(i));
+                        }
+                    }
                 }
                 break;
 
@@ -172,6 +189,8 @@ public class Client implements ClientController {
                 System.exit(0);
                 break;
 
+            case RSP_OK:
+                break;
             //case RSP_USERS_LIST:
                 // ПЕРЕДЕЛАТЬ
                 /*usersList.clear();
@@ -213,13 +232,25 @@ public class Client implements ClientController {
     }
 
     @Override
-    public void sendTextMessage(String msg) {
-        sendMessage(new BroadcastMessage(user.getNickName(), msg));
-    }
-
-    @Override
-    public void sendTextMessage(String toUser, String msg) {
-        sendMessage(new PrivateMessage(user.getNickName(), toUser, msg));
+    public void sendTextMessage(String text) {
+        if(text.startsWith("/")) {
+            String[] parts = text.split(" ", 2);
+            String toUser = parts[0].substring(1);
+            if ( (parts.length == 2) /*&& (clientController.getUsersList().contains(toUser))*/ ) {
+                text = parts[1];
+                sendMessage(new PrivateMessage(user.getNickName(), toUser, text));
+                text = "Я(" + user.getNickName() + ")->" + toUser + ": " + text;
+                clientUI.addMessage(text);
+            } else {
+                clientUI.addMessage("Пользователь не найден или не верная команда.\n\r");
+                return;
+            }
+        } else {
+            sendMessage(new BroadcastMessage(user.getNickName(), text));
+            text = "Я(" + user.getNickName() + "): " + text;
+            clientUI.addMessage(text);
+        }
+        history.add(text);
     }
 
     private void sendMessage(Message msg) {
