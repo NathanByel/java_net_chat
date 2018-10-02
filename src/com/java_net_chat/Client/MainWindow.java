@@ -69,34 +69,15 @@ public class MainWindow extends JFrame implements ClientUI {
         JMenuItem userData = new JMenuItem("Данные пользователя");
         configMenu.add(userData);
 
-        userData.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                new UserDataWindow(clientController);
-            }
-        });
+        userData.addActionListener(e -> new UserDataWindow(clientController));
         return configMenu;
     }
 
     private void sendText() {
         String msg = textFieldSend.getText().trim();
         textFieldSend.setText("");
-        String myNickName = clientController.getUser().getNickName();
 
         if(msg.length() > 0) {
-            if(msg.startsWith("/")) {
-                String[] parts = msg.split(" ", 2);
-                String toUser = parts[0].substring(1);
-                if ( (parts.length == 2) /*&& (clientController.getUsersList().contains(toUser))*/ ) {
-                    clientController.sendTextMessage(toUser, parts[1]);
-                    textAreaChat.append("Я(" + myNickName + ")->" + toUser + ": " + parts[1] + "\n\r");
-                } else {
-                    textAreaChat.append("Пользователь не найден или не верная команда.\n\r");
-                }
-                return;
-            }
-
-            textAreaChat.append("Я(" + myNickName + "): " + msg + "\n\r");
             clientController.sendTextMessage(msg);
         }
     }

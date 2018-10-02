@@ -15,8 +15,8 @@ import java.sql.*;
 
 public class SQLiteAuthService implements AuthService {
     private static final String TAG = "SQL Auth";
-    //private static final String DB_PATH = "../../chat_db.db";
-    private static final String DB_PATH = "E:/REPOSITORY/GitHUB/java_net_chat/src/chat_db.db";
+    private static final String DB_PATH = "chat_db.db";
+    //private static final String DB_PATH = "E:/REPOSITORY/GitHUB/java_net_chat/src/chat_db.db";
 
     private Connection connection = null;
 

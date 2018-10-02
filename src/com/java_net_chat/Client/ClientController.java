@@ -6,8 +6,7 @@ import java.util.List;
 
 public interface ClientController {
     void disconnect();
-    void sendTextMessage(String msg);
-    void sendTextMessage(String toUser, String msg);
+    void sendTextMessage(String text);
     void logIn(String nickName, String pass);
     void changeNickName(String nickName);
     User getUser();
