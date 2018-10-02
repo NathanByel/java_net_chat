@@ -159,12 +159,8 @@ public class Client implements ClientController {
                 if (clientUI == null) {
                     clientUI = new MainWindow(this);
                     history = new History(user.getNickName());
-                    List<String> lastHistory = history.getLastRecords(100);
-                    if(lastHistory != null) {
-                        for (int i = lastHistory.size() - 1; i >= 0; i--) {
-                            clientUI.addMessage(lastHistory.get(i));
-                        }
-                    }
+                    List<String> lastMessages = history.load(100);
+                    lastMessages.forEach(s -> clientUI.addMessage(s));
                 }
                 break;
 
