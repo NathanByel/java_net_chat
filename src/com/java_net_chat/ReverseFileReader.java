@@ -1,5 +1,8 @@
 package com.java_net_chat;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
@@ -7,7 +10,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class ReverseFileReader {
-    private static final String TAG = "FILE";
+    private static final Logger log = LoggerFactory.getLogger("FILE READER");
 
     private RandomAccessFile file;
     private long currentLineStart = -1;
@@ -19,7 +22,7 @@ public class ReverseFileReader {
             file = new RandomAccessFile(filePath, "rw");
             currentLineStart = file.length();
         } catch (Exception e) {
-            Log.e(TAG, "File access error - " + e.getMessage());
+            log.error("File access error - " + e.getMessage());
         }
     }
 
@@ -68,7 +71,7 @@ public class ReverseFileReader {
             file.read (b, 0, len);
             return new String(b);
         } catch (IOException e) {
-            Log.e(TAG, "Read line error - " + e.getMessage());
+            log.error("Read line error - " + e.getMessage());
         }
         return null;
     }
@@ -100,7 +103,7 @@ public class ReverseFileReader {
             file.seek(file.length());
             file.write((text + "\r\n").getBytes());
         } catch (IOException e) {
-            Log.e(TAG, "Record add error - " + e.getMessage());
+            log.error("Record add error - " + e.getMessage());
         }
     }
 

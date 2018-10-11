@@ -2,6 +2,8 @@ package com.java_net_chat.Channel;
 
 import com.java_net_chat.Log;
 import com.java_net_chat.Messages.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -9,7 +11,8 @@ import java.net.Socket;
 import java.util.Scanner;
 
 public class NetDataChannel implements DataChannel {
-    private static final String TAG = "NET CHANNEL";
+    private static final Logger log = LoggerFactory.getLogger("NET CHANNEL");
+
     private Socket socket;
     private Scanner netIn;
     private PrintWriter netOut;
@@ -24,7 +27,7 @@ public class NetDataChannel implements DataChannel {
             netOut = new PrintWriter(socket.getOutputStream());
             connected = true;
         } catch (Exception e) {
-            Log.e(TAG, "channel error. " + e.toString());
+            log.error("channel error. " + e.toString());
             throw new IOException("Socket error");
         }
     }
@@ -34,7 +37,7 @@ public class NetDataChannel implements DataChannel {
         /*try {
             this( new Socket );
         } catch (IOException e) {
-            Log.e(TAG, "Connect to " + host + ":" + port + " error. " + e.toString());
+            log.error("Connect to " + host + ":" + port + " error. " + e.toString());
             throw new IOException("Connect to " + host + ":" + port + " error.");
         }*/
     }
@@ -64,13 +67,13 @@ public class NetDataChannel implements DataChannel {
     public Message getMessage() {
         String data = netReceive();
         if(data == null) {
-            Log.e(TAG, "getMessage error. netReceive = null");
+            log.error("getMessage error. netReceive = null");
             return null;
         }
 
         String[] fields = data.split(":");
         if(fields.length < 2) {
-            Log.e(TAG, "Parse error. MSG " + data);
+            log.error("Parse error. MSG " + data);
             return null;
         }
 
@@ -86,14 +89,14 @@ public class NetDataChannel implements DataChannel {
             case USERS_LIST_MESSAGE:        msg = new UsersListMessage();       break;
             case CHANGE_NICKNAME_MESSAGE:   msg = new ChangeNicknameMessage();  break;
             default:
-                Log.e(TAG, "Wrong type. MSG " + data);
+                log.error("Wrong type. MSG " + data);
                 return null;
         }
 
         if( msg.deserialize(data) ) {
             return msg;
         }
-        Log.e(TAG, "Failed to deserialize. MSG " + data);
+        log.error("Failed to deserialize. MSG " + data);
         return null;
     }
 
@@ -108,7 +111,7 @@ public class NetDataChannel implements DataChannel {
             netOut.flush();
             return true;
         } catch (Exception e) {
-            Log.e(TAG, "netSend error. " + e.toString());
+            log.error("netSend error. " + e.toString());
             return false;
         }
     }
@@ -117,7 +120,7 @@ public class NetDataChannel implements DataChannel {
         try {
             return netIn.nextLine();
         } catch (Exception e) {
-            Log.e(TAG, "netReceive error. " + e.toString());
+            log.error("netReceive error. " + e.toString());
             return null;
         }
     }

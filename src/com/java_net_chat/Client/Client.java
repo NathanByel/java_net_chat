@@ -5,6 +5,8 @@ import com.java_net_chat.CmdRsp;
 import com.java_net_chat.Log;
 import com.java_net_chat.Messages.*;
 import com.java_net_chat.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -12,7 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Client implements ClientController {
-    private static final String TAG = "CLIENT";
+    private static final Logger log = LoggerFactory.getLogger("CLIENT");
+
     private final int CONNECT_TRY = 3;
     private final String SERVER_ADDR = "localhost";
     private final int SERVER_PORT = 8189;
@@ -76,7 +79,7 @@ public class Client implements ClientController {
                         if (msg != null) {
                             parseMessage(msg);
                         } else {
-                            Log.e(TAG, "getMessage error. Ошибка сети!");
+                            log.error("getMessage error. Ошибка сети!");
                             net.close();
                             connected = false;
                             subscribed = false;
@@ -99,14 +102,14 @@ public class Client implements ClientController {
             net.close();
         }
 
-        Log.i(TAG, "Попытка подключения к серверу - " + SERVER_ADDR + ":" + SERVER_PORT);
+        log.info("Попытка подключения к серверу - " + SERVER_ADDR + ":" + SERVER_PORT);
         try {
             net = new NetDataChannel(SERVER_ADDR, SERVER_PORT);
-            Log.i(TAG, "Подключено!");
+            log.info("Подключено!");
             net.sendMessage(new AuthMessage(user));
             connected = true;
         } catch (IOException e) {
-            Log.e(TAG,"Ошибка сети..." + e.toString());
+            log.error("Ошибка сети..." + e.toString());
             subscribed = false;
             connected = false;
         }
@@ -147,7 +150,7 @@ public class Client implements ClientController {
                 break;
 
             default:
-                Log.e(TAG, "Wrong message type");
+                log.error("Wrong message type");
         }
     }
 
@@ -199,7 +202,7 @@ public class Client implements ClientController {
                 //break;
 
             default:
-                Log.e(TAG, "Wrong response type - " + msg.getRsp().toString());
+                log.error("Wrong response type - " + msg.getRsp().toString());
         }
 
     }
@@ -252,11 +255,11 @@ public class Client implements ClientController {
     private void sendMessage(Message msg) {
         if (connected && subscribed) {
             if( !net.sendMessage(msg) ) {
-                Log.e(TAG, "sendMessage Ошибка сети!");
+                log.error("sendMessage Ошибка сети!");
             }
         } else {
             clientUI.addMessage("Нет подключения к серверу!");
-            Log.e(TAG, "Нет подключения к серверу!");
+            log.error("Нет подключения к серверу!");
         }
     }
 
@@ -264,11 +267,11 @@ public class Client implements ClientController {
     public void changeNickName(String nickName) {
         if (connected && subscribed) {
             if( !net.sendMessage( new ChangeNicknameMessage(nickName)) ) {
-                Log.e(TAG, "sendMessage Ошибка сети!");
+                log.error("sendMessage Ошибка сети!");
             }
         } else {
             clientUI.addMessage("Нет подключения к серверу!");
-            Log.e(TAG, "Нет подключения к серверу!");
+            log.error("Нет подключения к серверу!");
         }
     }
 }
