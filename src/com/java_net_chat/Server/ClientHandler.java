@@ -6,12 +6,15 @@ import com.java_net_chat.Log;
 import com.java_net_chat.Messages.*;
 import com.java_net_chat.User;
 import com.java_net_chat.UserInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.Socket;
 
 public class ClientHandler {
-    private static final String TAG = "CLIENT HANDLER";
+    private static final Logger log = LoggerFactory.getLogger("CLIENT HANDLER");
+
     private static final int AUTH_TIMEOUT = 120000;
     private UserInfo userInfo;
     private Server server;
@@ -53,7 +56,7 @@ public class ClientHandler {
                         authorised = true;
                         break;
                     } else {
-                        Log.e(TAG, "Клиент " + this.hashCode() + " " + cmdRsp + " Необходима регистрация.");
+                        log.error("Клиент " + this.hashCode() + " " + cmdRsp + " Необходима регистрация.");
                         net.sendMessage( new ResponseMessage(cmdRsp) );
                         //net.sendMessage( new ResponseMessage(CmdRsp.RSP_NEED_AUTH) );
                         //dropClient();
@@ -90,7 +93,7 @@ public class ClientHandler {
                 if(!authorised) {
                     if( (time - authStartTime) > AUTH_TIMEOUT) {
                         net.sendMessage( new ResponseMessage(CmdRsp.RSP_AUTH_TIMEOUT));
-                        Log.e(TAG, "Клиент " + this.hashCode() + " отключен. Таймаут авторизации.");
+                        log.error("Клиент " + this.hashCode() + " отключен. Таймаут авторизации.");
                         dropClient();
                         break;
                     }
@@ -154,7 +157,7 @@ public class ClientHandler {
             //    break;
 
             //case END_CMD:
-                //Log.i(TAG, "Клиент " + user.getNickName() + " конец сессии.");
+                //log.info("Клиент " + user.getNickName() + " конец сессии.");
                 //dropClient();
             //    break;
             default:
@@ -163,7 +166,7 @@ public class ClientHandler {
     }
 
     private void dropClient() {
-        Log.i(TAG, "Drop client");
+        log.info("Drop client");
         if(subscribed) {
             server.unsubscribe(this);
         }
