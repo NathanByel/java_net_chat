@@ -9,20 +9,24 @@ import com.java_net_chat.UserInfo;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ClientHandler {
     private static final String TAG = "CLIENT HANDLER";
     private static final int AUTH_TIMEOUT = 120000;
     private UserInfo userInfo;
     private Server server;
+    private ClientHandler THIS = this;
 
-    private long clientLastAliveTime = 0; // Не используется пока
-    private long authStartTime = 0;
+    private long clientLastActiveTime = 0;
 
-    private boolean run = true;
     private boolean subscribed = false;
     private boolean authorised = false;
 
+    private ExecutorService executorService;
     private NetDataChannel net;
 
     // *****************************************************************************************************************
@@ -33,76 +37,22 @@ public class ClientHandler {
             net = new NetDataChannel(socket);
         } catch (IOException e) {
             e.printStackTrace();
-
             return;
         }
 
-        authStartTime = System.currentTimeMillis();
-        new Thread(() -> {
-            while(true) {
-                Message msg = net.getMessage();
-                if(msg == null) {
-                    dropClient();
-                    return;
-                }
+        executorService = Executors.newFixedThreadPool(3);
+        executorService.execute(timeOutTask);
 
-                if(msg.getType() == MessageType.AUTH_MESSAGE) {
-
-                    CmdRsp cmdRsp = checkAuth( ((AuthMessage)msg).getUser() );
-                    if (cmdRsp == CmdRsp.RSP_OK) {
-                        authorised = true;
-                        break;
-                    } else {
-                        Log.e(TAG, "Клиент " + this.hashCode() + " " + cmdRsp + " Необходима регистрация.");
-                        net.sendMessage( new ResponseMessage(cmdRsp) );
-                        //net.sendMessage( new ResponseMessage(CmdRsp.RSP_NEED_AUTH) );
-                        //dropClient();
-                        //return;
-                    }
-                }
+        try {
+            if( executorService.submit(authTask).get() ) {
+                executorService.execute(messageReceiverTask);
+                return;
             }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-            net.sendMessage( new ResponseMessage(CmdRsp.RSP_OK_AUTH) );
-            server.subscribe(this);
-            subscribed = true;
-
-            /*net.sendMessage( new InfoMessage("Добро пожаловать!\r\n" +
-                    "Для отправки личных сообщений используйте формат:\r\n" +
-                    "/имя сообщение\r\n") );*/
-            net.sendMessage( new InfoMessage("Добро пожаловать!") );
-            net.sendMessage( new InfoMessage("Для отправки личных сообщений используйте формат:") );
-            net.sendMessage( new InfoMessage("/имя сообщение") );
-
-            while(run) {
-                Message msg = net.getMessage();
-                if(msg != null) {
-                    parseFromMessage(msg);
-                } else {
-                    dropClient();
-                }
-            }
-        }).start();
-
-        new Thread(() -> {
-            while(run) {
-                long time = System.currentTimeMillis();
-
-                if(!authorised) {
-                    if( (time - authStartTime) > AUTH_TIMEOUT) {
-                        net.sendMessage( new ResponseMessage(CmdRsp.RSP_AUTH_TIMEOUT));
-                        Log.e(TAG, "Клиент " + this.hashCode() + " отключен. Таймаут авторизации.");
-                        dropClient();
-                        break;
-                    }
-                }
-
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
+        dropClient();
     }
 
     private CmdRsp checkAuth(User user) {
@@ -122,7 +72,7 @@ public class ClientHandler {
     private void parseFromMessage(Message msg) {
         switch (msg.getType()) {
             case ALIVE_MESSAGE:
-                clientLastAliveTime = System.currentTimeMillis();
+                clientLastActiveTime = System.currentTimeMillis();
                 net.sendMessage(new ResponseMessage(CmdRsp.RSP_OK));
                 break;
 
@@ -164,11 +114,11 @@ public class ClientHandler {
 
     private void dropClient() {
         Log.i(TAG, "Drop client");
+        net.close();
         if(subscribed) {
             server.unsubscribe(this);
         }
-        net.close();
-        run = false;
+        executorService.shutdownNow();
     }
 
     public boolean isSubscribed() {
@@ -182,4 +132,82 @@ public class ClientHandler {
     public void sendMessage(Message msg) {
         net.sendMessage(msg);
     }
+
+    // Таски
+    private Callable<Boolean> authTask = new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+            while(true) {
+                Message msg = net.getMessage();
+                if(msg == null) {
+                    dropClient();
+                    return false;
+                }
+
+                if(msg.getType() == MessageType.AUTH_MESSAGE) {
+
+                    CmdRsp cmdRsp = checkAuth( ((AuthMessage)msg).getUser() );
+                    if (cmdRsp == CmdRsp.RSP_OK) {
+                        authorised = true;
+                        break;
+                    } else {
+                        Log.e(TAG, "Клиент " + this.hashCode() + " " + cmdRsp + " Необходима регистрация.");
+                        net.sendMessage( new ResponseMessage(cmdRsp) );
+                        //net.sendMessage( new ResponseMessage(CmdRsp.RSP_NEED_AUTH) );
+                        //dropClient();
+                        //return;
+                    }
+                }
+            }
+
+            net.sendMessage( new ResponseMessage(CmdRsp.RSP_OK_AUTH) );
+            server.subscribe(THIS);
+            subscribed = true;
+
+            net.sendMessage( new InfoMessage("Добро пожаловать!") );
+            net.sendMessage( new InfoMessage("Для отправки личных сообщений используйте формат:") );
+            net.sendMessage( new InfoMessage("/имя сообщение") );
+            return true;
+        }
+    };
+
+    private Runnable messageReceiverTask = new Runnable() {
+        @Override
+        public void run() {
+            while(true) {
+                Message msg = net.getMessage();
+                if(msg != null) {
+                    parseFromMessage(msg);
+                } else {
+                    dropClient();
+                    break;
+                }
+            }
+        }
+    };
+
+    private Runnable timeOutTask = new Runnable() {
+        @Override
+        public void run() {
+            clientLastActiveTime = System.currentTimeMillis();
+            while(true) {
+                long time = System.currentTimeMillis();
+
+                if(!authorised) {
+                    if( (time - clientLastActiveTime) > AUTH_TIMEOUT) {
+                        net.sendMessage( new ResponseMessage(CmdRsp.RSP_AUTH_TIMEOUT));
+                        Log.e(TAG, "Клиент " + this.hashCode() + " отключен. Таймаут авторизации.");
+                        dropClient();
+                        break;
+                    }
+                }
+
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    break;
+                }
+            }
+        }
+    };
 }
